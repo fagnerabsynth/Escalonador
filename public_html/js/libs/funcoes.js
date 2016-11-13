@@ -14,8 +14,9 @@ function modal(c) {
     }
 
 
-    if ($('#titulo').html().trim() !== "")
-        $('#modal').modal('show');
+    if ($('#titulo').html().trim() !== "") {
+        $('#novoModal').modal("show");
+    }
 }
 
 
@@ -96,8 +97,11 @@ function salvaProcesso() {
 
 
         listarProcessos();
-        $('#modal').modal('hide');
 
+        $('#novoModal').modal("hide");
+        $('#titulo').html('');
+        $('#campox').html('');
+        $('#botoes').html('');
     }
 }
 
@@ -109,7 +113,7 @@ function listarProcessos() {
         var i = 1;
         html += "<table class='table table-condensed table-hover'><thead><tr><th></th><th>Processo:</th></th><th>Prioridade</th><th></th><th></th></tr></head><tbody>";
         for (var item in processos) {
-            html += "<tr><td>" + i + "</td><td>" + processos[item].processo + "</td><td>" + processos[item].prioridade + "</td><td title='Editar'><a href=\"javascript:void(0)\" onclick=\"editarProcesso('" + item + "');\" >E</a></td><td><a href=\"javascript:void(0)\" onclick=\"apagaProcesso('" + item + "')\" >X</a></td></tr>";
+            html += "<tr><td>" + i + "</td><td>" + processos[item].processo + "</td><td>" + processos[item].prioridade + "</td><td title='Editar'><a href=\"javascript:void(0)\" onclick=\"editarProcesso('" + item + "');\" >E</a></td><td><a href=\"javascript:void(0)\" onclick=\"apagaProcesso('" + item + "')\" title=\"Apagar\">X</a></td></tr>";
         }
         html += "</tbody></table>";
 
@@ -146,13 +150,13 @@ function apagaProcesso(i) {
 
 function editarProcesso(i) {
     if (processos.length > 0) {
-        modal("Criar processo");
-
-        $('#processo').val(processos[i]["processo"]).attr({"readonly": "readonly"});
-        $('#prioridade').val(processos[i]["prioridade"]);
-        $('#tempo').val(processos[i]["tempo"]);
-        $('#limite').val(processos[i]["limite"]);
-
+        if (!$('#modal').is(':visible')) {
+            modal("Criar processo");
+            $('#processo').val(processos[i]["processo"]).attr({"readonly": "readonly"});
+            $('#prioridade').val(processos[i]["prioridade"]);
+            $('#tempo').val(processos[i]["tempo"]);
+            $('#limite').val(processos[i]["limite"]);
+        }
     }
 }
 
@@ -161,6 +165,9 @@ function processa() {
     switch (d) {
         case 'fifo':
             fifo();
+            break;
+        case 'stf':
+            stf();
             break;
         default:
             alert("Por favor selecione um algoritmo!");
@@ -192,6 +199,7 @@ function contaTempo(t) {
 
 var para;
 function iniciaFifo(p, i) {
+
     var tempo = parseInt(p[i]['tempo']);
 
     var html = "<table class=\"table table-condensed table-hover\"><thead>";
@@ -200,7 +208,6 @@ function iniciaFifo(p, i) {
     html += "</thead><tbody>";
     var status;
     for (var x in p) {
-
         if (x == i) {
             status = "<div style=\"background-color:green;text-align:center;color:white;font-weight:bolder;\" id=\"exe\">Execução</div>";
         } else if (status === "<div style=\"background-color:green;text-align:center;color:white;font-weight:bolder;\" id=\"exe\">Execução</div>") {
@@ -208,14 +215,23 @@ function iniciaFifo(p, i) {
         } else {
             status = "<div style=\"background-color:#d1d1d1;text-align:center;color:white;font-weight:bolder;\">Espera</div>";
         }
-
         html += "<tr><td>" + (parseInt(x) + 1) + "</td><td>" + p[x]["processo"] + "</td><td>" + p[x]["prioridade"] + "</td><td>" + p[x]["tempo"] + "</td><td>" + status + "</td></tr>";
+
+
         if (x == i) {
-            html += "<tr><td colspan='5' id='campo'>\n\<div class=\"progress\"><div class=\"progress-bar progress-bar-success progress-bar-striped active\" role=\"progressbar\" aria-valuenow=\"0\" aria-valuemin=\"0\" aria-valuemax=\"100\" id=\"xtempo\"></div></div></td></tr>";
+            html += "<tr>\n\
+<td colspan='5' id='campox'>\n\
+<div class=\"progress\">\n\
+<div class=\"progress-bar progress-bar-success progress-bar-striped active\" role=\"progressbar\" aria-valuenow=\"0\" aria-valuemin=\"0\" aria-valuemax=\"100\" id=\"xtempo\"></div>\n\
+</div>\n\
+</td>\n\
+</tr>";
         }
+
     }
+
     html += "</tbody></table>";
-    $("#conteudo").html(html);
+    $("#conteudos").html(html);
     contaTempo(tempo.toString());
     i++;
     if (p.length > i) {
@@ -228,9 +244,109 @@ function iniciaFifo(p, i) {
             $('#xtempo').html("Processo finalizado!");
             $('#xtempo').removeClass("active");
             $('#exe').html("<div style=\"background-color:#d1d1d1;text-align:center;color:white;font-weight:bolder;\">Espera</div>");
-
         }, tempo * 1050);
 
     }
 }
 
+
+function stf() {
+    if (travaProcesso) {
+        travaProcesso = false;
+        var tmp = new Array();
+        for (var m in processos) {
+            tmp.push(processos[m]);
+        }
+        var p = sorteioSTF(processos);
+        processos = tmp;
+        iniciaStf(processos, 0, p);
+    }
+}
+
+function pegaPosicao(d, x) {
+    for (var m in d) {
+        if (d[m]['idx'] === x) {
+            return  parseInt(d[m]['idx']) + 1 ;
+        }
+    }
+}
+
+
+var para;
+function iniciaStf(p, i, d) {
+
+    var tempo;
+
+    var html = "<table class=\"table table-condensed table-hover\"><thead>";
+    html += "<tr><td>Ordem</td><td>Nome</td><td>Prioridade</td><td>Tempo</td><td>Status</td></tr>";
+
+    html += "</thead><tbody>";
+    var status;
+
+
+
+    for (var x in p) {
+        if (p[x]['processo'] === d[i]['processo']) {
+            tempo = parseInt(p[x]['tempo']);
+            status = "<div style=\"background-color:green;text-align:center;color:white;font-weight:bolder;\" id=\"exe\">Execução</div>";
+        } else if (i + 1 < p.length) {
+
+            if (p[x]['processo'] === d[i + 1]['processo']) {
+                status = "<div style=\"background-color:yellow;text-align:center;color:white;font-weight:bolder;\">Pronto</div>";
+            } else {
+                status = "<div style=\"background-color:#d1d1d1;text-align:center;color:white;font-weight:bolder;\">Espera</div>";
+            }
+        } else {
+            status = "<div style=\"background-color:#d1d1d1;text-align:center;color:white;font-weight:bolder;\">Espera</div>";
+        }
+        html += "<tr><td>" + pegaPosicao(d, x) + "</td><td>" + p[x]["processo"] + "</td><td>" + p[x]["prioridade"] + "</td><td>" + p[x]["tempo"] + "</td><td>" + status + "</td></tr>";
+
+
+        if (p[x]['processo'] === d[i]['processo']) {
+            html += "<tr>\n\
+<td colspan='5' id='campox'>\n\
+<div class=\"progress\">\n\
+<div class=\"progress-bar progress-bar-success progress-bar-striped active\" role=\"progressbar\" aria-valuenow=\"0\" aria-valuemin=\"0\" aria-valuemax=\"100\" id=\"xtempo\"></div>\n\
+</div>\n\
+</td>\n\
+</tr>";
+        }
+
+    }
+
+    html += "</tbody></table>";
+    $("#conteudos").html(html);
+    contaTempo(tempo.toString());
+    i++;
+    if (p.length > i) {
+        para = window.setTimeout(function () {
+            iniciaStf(p, i, d);
+        }, tempo * 1000);
+    } else {
+        travaProcesso = true;
+        para = window.setTimeout(function () {
+            $('#xtempo').html("Processo finalizado!");
+            $('#xtempo').removeClass("active");
+            $('#exe').html("<div style=\"background-color:#d1d1d1;text-align:center;color:white;font-weight:bolder;\">Espera</div>");
+        }, tempo * 1050);
+
+    }
+}
+
+function sorteioSTF(a) {
+    var tmp = new Array();
+    for (var x in a) {
+        a[x]["idx"] = x;
+        tmp.push(a[x]);
+    }
+    tmp.sort(ordena("prioridade"));
+    return tmp;
+}
+
+function  ordena(campo) {
+    return function (a, b) {
+        var ax = a[campo], bx = b[campo];
+        return ax < bx ? 1 : (ax > bx ? -1 : 0);
+
+    };
+}

@@ -6,10 +6,14 @@
             <name>Escalonador</name>
         </data>
         <libraries xmlns="http://www.netbeans.org/ns/cdnjs-libraries/1">
-            <library name="jquery" version="1.12.4">
+            <library name="jquery" version="3.1.1">
+                <file localPath="public_html/js/libs/jquery/core.js" path="core.js"/>
                 <file localPath="public_html/js/libs/jquery/jquery.js" path="jquery.js"/>
                 <file localPath="public_html/js/libs/jquery/jquery.min.js" path="jquery.min.js"/>
                 <file localPath="public_html/js/libs/jquery/jquery.min.map" path="jquery.min.map"/>
+                <file localPath="public_html/js/libs/jquery/jquery.slim.js" path="jquery.slim.js"/>
+                <file localPath="public_html/js/libs/jquery/jquery.slim.min.js" path="jquery.slim.min.js"/>
+                <file localPath="public_html/js/libs/jquery/jquery.slim.min.map" path="jquery.slim.min.map"/>
             </library>
             <library name="twitter-bootstrap" version="3.3.7">
                 <file localPath="public_html/js/libs/twitter-bootstrap/css/bootstrap-theme.css" path="css/bootstrap-theme.css"/>
