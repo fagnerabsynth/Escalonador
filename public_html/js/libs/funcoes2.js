@@ -684,7 +684,7 @@ function listarProcessos() {
         html += "<select class=\"btn btn-danger form-control\" id=\"select\"><option value=\"\">Selecione o algoritmo</option>\n\
 <option value=\"fifo\">Fifo</option>\n\
 <option value=\"circular\">Circular</option>\n\
-<option value=\"stf\">STF</option>\n\
+<option value=\"stf\">SJF</option>\n\
 </select>";
         html += "<input type=\"button\" value=\"Inciar Processo\" class=\"btn btn-primary form-control\" onclick=\"processa()\">";
     }
