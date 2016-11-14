@@ -1,179 +1,183 @@
-function modal(c) {
 
-    switch (c) {
-        case "Criar processo":
-            var r = criarProcesso();
-            $('#titulo').html(r.titulo);
-            $('#campo').html(r.campo);
-            $('#botoes').html(r.botoes);
-            break;
-        default:
-            $('#titulo').html('');
-            $('#campo').html('');
-            $('#botoes').html('');
+
+
+
+
+
+function alteraStatus(proximo, atual, tempo, todos) {
+
+
+    atual = parseInt(atual);
+    proximo = parseInt(proximo) + 1;
+    for (var n in todos) {
+        $("#idx" + (n + 1)).html("<div style=\"background-color:#d1d1d1;text-align:center;color:white;font-weight:bolder;\">Espera</div>");
     }
-
-
-    if ($('#titulo').html().trim() !== "") {
-        $('#novoModal').modal("show");
-    }
+    var t = parseInt(tempo) * 1000 / 2;
+    $("#idx" + proximo).html("<div style=\"background-color:#d1d1d1;text-align:center;color:white;font-weight:bolder;\">Espera</div>");
+    window.setTimeout(function () {
+        $("#idx" + proximo).html("<div style=\"background-color:yellow;text-align:center;color:white;font-weight:bolder;\">Pronto</div>");
+    }, t);
+    $("#idx" + (atual + 1)).html("<div style=\"background-color:green;text-align:center;color:white;font-weight:bolder;\" id=\"exe\">Execução</div>");
 }
 
+function iniciaCircular(p, i) {
 
-function criarProcesso() {
-    var html = "";
-    html += "<label for=\"processo\">Criar processo</label>";
-    html += "<input type=\"text\" placeholder=\"Nome do processo\" class=\"form-control\" id=\"processo\" >";
-    html += "<label for=\"prioridade\">Prioridade</label>";
-    html += "<input type=\"number\" class=\"form-control\" id=\"prioridade\" >";
-    html += "<label for=\"tempo\">Tempo de execução</label>";
-    html += "<input type=\"number\" class=\"form-control\" id=\"tempo\" >";
-    html += "<label for=\"limite\">Limite* <small><small>Caso você utilize o metódo circular.</small></small></label>";
-    html += "<input type=\"number\" class=\"form-control\" id=\"limite\" >";
-    var btn = "<button type=\"button\" class=\"btn btn-default\" data-dismiss=\"modal\">Fechar</button>\n\
-<button type=\"button\" onclick=\"salvaProcesso()\" class=\"btn btn-primary\">Salvar alterações</button>";
-    return {titulo: "Criar processo", campo: html, botoes: btn};
-}
+    var mx = i;
+    libera++;
+    var tempo = parseInt(p[mx]['tempo']);
+    var limite = parseInt(p[mx]['limite']);
 
-var processos = new Array();
-function salvaProcesso() {
-    var processo = $('#processo').val().trim();
-    var prioridade = $('#prioridade').val().trim().replace("/[^0-9]/g", "");
-    var tempo = $('#tempo').val().trim().replace("/[^0-9]/g", "");
-    var limite = $('#limite').val().trim().replace("/[^0-9]/g", "");
-    var erro = false;
-    var mensagem = "";
-    if (processo === "") {
-        erro = true;
-        mensagem += "Por favor, digite o nome do processo!";
-    }
+    var html = "<table class=\"table table-condensed table-hover\"><thead>";
+    html += "<tr><td>Nº</td><td>Nome</td><td>Prioridade</td><td>Tempo</td><td>Status</td></tr>";
 
-    if (tempo <= 0) {
-        erro = true;
-        if (mensagem.length > 0) {
-            mensagem += "\n";
+    html += "</thead><tbody>";
+    var status = "";
+    var ids = new Array();
+    for (var x in p) {
+        ids.push({id: i, x: (parseInt(x) + 1), t: p[x]['limite']});
+        if (p.length === 1) {
+            if (x === i) {
+                status = "<div style=\"background-color:green;text-align:center;color:white;font-weight:bolder;\" id=\"exe\">Execução</div>";
+            } else if (status === "<div style=\"background-color:green;text-align:center;color:white;font-weight:bolder;\" id=\"exe\">Execução</div>") {
+                status = "<div style=\"background-color:yellow;text-align:center;color:white;font-weight:bolder;\">Pronto</div>";
+            } else {
+                status = "<div style=\"background-color:#d1d1d1;text-align:center;color:white;font-weight:bolder;\">Espera</div>";
+            }
+        } else {
+            status = "<div style=\"background-color:#d1d1d1;text-align:center;color:white;font-weight:bolder;\">Espera</div>";
         }
-        mensagem += "Por favor, insira um tempo válido!";
-    }
+        html += "<tr><td>" + (parseInt(x) + 1) + "</td><td>" + p[x]["processo"] + "</td><td>" + p[x]["prioridade"] + "</td><td>" + p[x]["total"] + "</td><td><div id=\"idx" + (parseInt(x) + 1) + "\" class=\"exe\">" + status + "</div></td></tr>";
 
 
-    if (!(prioridade > 0 && prioridade <= 5)) {
-        erro = true;
-        if (mensagem.length > 0) {
-            mensagem += "\n";
+        if (x == i) {
+            html += "<tr>\n\
+<td colspan='5' id='campox'>\n\
+<div class=\"progress\">\n\
+<div class=\"progress-bar progress-bar-success progress-bar-striped active\" role=\"progressbar\" aria-valuenow=\"0\" aria-valuemin=\"0\" aria-valuemax=\"100\" id=\"xtempo\"></div>\n\
+</div>\n\
+</td>\n\
+</tr>";
         }
-        mensagem += "Por favor, prioridade entre 1 e 5!";
+
+    }
+    html += "</tbody></table>";
+    $("#conteudos").html(html);
+    if (libera === 1) {
+        trocaStatus(p, i, 0);
+        return;
     }
 
-    if (limite === 0) {
-        limite = tempo;
-    }
-    if (erro) {
-        alert(mensagem);
-    } else {
-        var ok = true;
-        if (processos.length > 0) {
+
+    contaTempoLimite(tempo.toString(), limite.toString(), p[i]['carregado']);
+
+    $('#idx' + (i + 1)).html("<div style=\"background-color:green;text-align:center;color:white;font-weight:bolder;\" id=\"exe\">Execução</div>");
+
+    p[i]['carregado'] += parseInt(p[i]['limite']);
+    p[i]["tempo"] = parseInt(p[i]["tempo"]);
+    p[i]["limite"] = parseInt(p[i]["limite"]);
 
 
-            for (var m in processos) {
-                if (processos[m].processo === processo) {
-                    processos[m].processo = processo;
-                    processos[m].tempo = tempo;
-                    processos[m].prioridade = prioridade;
-                    processos[m].limite = limite;
-                    $('#processo').attr({"readonly": "readonly"});
-                    alert('dados atualizados com sucesso!');
-                    ok = false;
-                    break;
+
+
+
+
+    if (p[i]["tempo"] > 0) {
+        p[i]["tempo"] -= p[i]["limite"];
+        if (p[i]["tempo"] < 0) {
+            p[i]["tempo"] = 0;
+        }
+
+
+        var ex = false;
+        for (var m in p) {
+            if (p[m]["tempo"] > 0) {
+                ex = true;
+                break;
+            }
+        }
+
+
+
+        if (ex) {
+
+
+
+            if (p.length - 1 > i) {
+                i++;
+            } else {
+                i = 0;
+            }
+
+            if (p[i]["tempo"] <= 0) {
+                for (var m in p) {
+                    if (p[m]["tempo"] > 0) {
+                        i = m;
+                        break;
+                    }
                 }
             }
-            if (ok) {
-                processos.push({prioridade: prioridade, tempo: tempo, processo: processo, limite: limite});
+
+
+            if (p.length > 1) {
+                if (parseInt(i) === parseInt(mx)) {
+
+                } else {
+                    alteraStatus(parseInt(i), parseInt(mx), parseInt(p[i]["tempo"]), p);
+                }
             }
+
+
+            window.setTimeout(function () {
+                if (p.length > 1) {
+
+                    if (parseInt(i) !== parseInt(mx)) {
+                        iniciaCircular(p, i);
+                    } else {
+                        trocaStatus(p, parseInt(mx), 0);
+                    }
+
+                } else {
+                    if (p.length <= 1) {
+                        trocaStatus(p, parseInt(mx), 0);
+                    }
+                }
+            }, tempo * 1000);
 
         } else {
-            processos.push({prioridade: prioridade, tempo: tempo, processo: processo, limite: limite});
+            $("#idx" + (i + 1)).html("<div style=\"background-color:green;text-align:center;color:white;font-weight:bolder;\" id=\"exe\">Execução</div>");
+
+            window.setTimeout(function () {
+                travaProcesso = true;
+                $('#xtempo').html("Processo finalizado!");
+                $('#xtempo').removeClass("active");
+                $('#exe').html("<div style=\"background-color:#d1d1d1;text-align:center;color:white;font-weight:bolder;\">Espera</div>");
+            }, tempo * 1050);
         }
 
-
-        listarProcessos();
-
-        $('#novoModal').modal("hide");
-        $('#titulo').html('');
-        $('#campox').html('');
-        $('#botoes').html('');
     }
+
+
+
 }
 
 
 
-function listarProcessos() {
-    var html = "";
-    if (processos.length > 0) {
-        var i = 1;
-        html += "<table class='table table-condensed table-hover'><thead><tr><th></th><th>Processo:</th></th><th>Prioridade</th><th></th><th></th></tr></head><tbody>";
-        for (var item in processos) {
-            html += "<tr><td>" + i + "</td><td>" + processos[item].processo + "</td><td>" + processos[item].prioridade + "</td><td title='Editar'><a href=\"javascript:void(0)\" onclick=\"editarProcesso('" + item + "');\" >E</a></td><td><a href=\"javascript:void(0)\" onclick=\"apagaProcesso('" + item + "')\" title=\"Apagar\">X</a></td></tr>";
-        }
-        html += "</tbody></table>";
-
-        html += "<select class=\"btn btn-danger form-control\" id=\"select\"><option value=\"\">Selecione o algoritmo</option>\n\
-<option value=\"fifo\">Fifo</option>\n\
-<option value=\"circular\">Circular</option>\n\
-<option value=\"stf\">STF</option>\n\
-</select>";
-
-        html += "<input type=\"button\" value=\"Inciar Processo\" class=\"btn btn-primary form-control\" onclick=\"processa()\">";
-
+function trocaStatus(p, i, c) {
+    var status = new Array();
+    status[0] = "<div style=\"background-color:#d1d1d1;text-align:center;color:white;font-weight:bolder;\">Espera</div>";
+    status[1] = "<div style=\"background-color:yellow;text-align:center;color:white;font-weight:bolder;\">Pronto</div>";
+    status[2] = "<div style=\"background-color:green;text-align:center;color:white;font-weight:bolder;\" id=\"exe\">Execução</div>";
+    $('#idx' + (i + 1)).html(status[c]);
+    if (c < status.length) {
+        window.setTimeout(function () {
+            c++;
+            trocaStatus(p, i, c);
+        }, 1000);
+    } else {
+        iniciaCircular(p, i);
     }
-    jQuery("#processosCadastrados").html(html);
+
 }
-
-function apagaProcesso(i) {
-    var c = processos[i];
-    if (confirm("Você deseja apagar o processo \"" + c.processo + "\"?")) {
-        processos.splice(i, 1);
-        if (processos.length > 0) {
-            var temp = new Array();
-            for (var x in processos) {
-                temp.push(processos[x])
-            }
-            processos = new Array();
-            processos = temp;
-        }
-        listarProcessos();
-    }
-}
-
-
-
-
-function editarProcesso(i) {
-    if (processos.length > 0) {
-        if (!$('#modal').is(':visible')) {
-            modal("Criar processo");
-            $('#processo').val(processos[i]["processo"]).attr({"readonly": "readonly"});
-            $('#prioridade').val(processos[i]["prioridade"]);
-            $('#tempo').val(processos[i]["tempo"]);
-            $('#limite').val(processos[i]["limite"]);
-        }
-    }
-}
-
-function processa() {
-    var d = $('#select').val();
-    switch (d) {
-        case 'fifo':
-            fifo();
-            break;
-        case 'stf':
-            stf();
-            break;
-        default:
-            alert("Por favor selecione um algoritmo!");
-    }
-}
-
 
 
 var dadosProcesso;
@@ -184,6 +188,30 @@ function fifo() {
         iniciaFifo(processos, 0);
     }
 }
+
+
+
+function contaTempoLimite(t, l, i) {
+console.log(i);
+    var p = ((parseInt(l) + parseInt(i)) * 100) / parseInt(t);
+
+    if (p > 100) {
+        p = 100;
+    }
+
+    i = ((parseInt(i)) * 100) / parseInt(t);
+    t = parseInt(t) * 1000;
+
+    $('#xtempo').css({width: i + "%"});
+    $('#xtempo').animate({width: p + "%"}, {
+        queue: false,
+        duration: t
+    }, function () {
+        $('#xtempox').html("Execução concluída!");
+    });
+
+}
+
 
 function contaTempo(t) {
     t = parseInt(t) * 1000;
@@ -254,11 +282,11 @@ function stf() {
     if (travaProcesso) {
         travaProcesso = false;
         var tmp = new Array();
-        for (var m in processos) {
+        for (var m in this.processos) {
             tmp.push(processos[m]);
         }
         var p = sorteioSTF(processos);
-        processos = tmp;
+        this.processos = tmp;
         iniciaStf(processos, 0, p);
     }
 }
@@ -266,7 +294,7 @@ function stf() {
 function pegaPosicao(d, x) {
     for (var m in d) {
         if (d[m]['idx'] === x) {
-            return  parseInt(d[m]['idx']) + 1 ;
+            return  parseInt(d[m]['idx']) + 1;
         }
     }
 }
